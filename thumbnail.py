@@ -4,17 +4,19 @@ from StringIO import StringIO
 import os
 import sys
 
-# Attempt to use memcached
+# Configuration
+IMAGE_DIRECTORY = '/home/kobrien/Pictures/'
+MEMCACHE_HOSTS = ['127.0.0.1:11211'] 
 cache_available = True
+
+# Attempt to use memcache module, if not available disable cache
 try:
     import memcache
-    cache = memcache.Client(['127.0.0.1:11211'], debug=0)
+    cache = memcache.Client(MEMCACHE_HOSTS, debug=0)
     cache_ttl = 900  # seconds
 except ImportError:
     cache_available = False
 
-
-image_directory = '/home/kobrien/Pictures/'
 
 def generate_thumbnail(filename, size):   
     """ Generates a thumbnail of the file and returns response body, 
@@ -31,10 +33,9 @@ def generate_thumbnail(filename, size):
         data = None
         
     if data is not None:
-        print >> sys.stderr, 'Cache hit for ' + cache_key
         return data
     else:
-        i = Image.open(image_directory + filename)
+        i = Image.open(IMAGE_DIRECTORY + filename)
         try:
             i.thumbnail((int(size), int(size)))
         except:
@@ -62,7 +63,7 @@ def application(environ, start_response):
     size = size['w'][0]
             
     # Make sure file exists        
-    if os.path.isfile(image_directory + filename) and filename.lower().endswith('.jpg'):
+    if os.path.isfile(IMAGE_DIRECTORY + filename) and filename.lower().endswith('.jpg'):
         status = '200 OK'    
         mime_type = 'image/jpeg'
         output = generate_thumbnail(filename, size)
