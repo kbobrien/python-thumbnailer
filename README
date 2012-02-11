@@ -1,0 +1,5 @@
+
+Overview:
+---------
+
+This is a simple WSGI Python module to implement and image thumbnailer including a caching layer for serious performance. 
