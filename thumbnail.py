@@ -2,12 +2,19 @@ import cgi
 import Image
 from StringIO import StringIO
 import os
-import memcache
 import sys
 
-cache = memcache.Client(['127.0.0.1:11211'], debug=0)
+# Attempt to use memcached
+cache_available = True
+try:
+    import memcache
+    cache = memcache.Client(['127.0.0.1:11211'], debug=0)
+    cache_ttl = 900  # seconds
+except ImportError:
+    cache_available = False
+
+
 image_directory = '/home/kobrien/Pictures/'
-cache_ttl = 900  # seconds
 
 def generate_thumbnail(filename, size):   
     """ Generates a thumbnail of the file and returns response body, 
@@ -15,9 +22,14 @@ def generate_thumbnail(filename, size):
     
     cache_key = filename + '_' + size
     
+    # TODO: Abstract caching out into a class so memcached is easily changed
+    
     # Try cache first
-    #data = cache.get(cache_key)
-    data = None
+    if cache_available:
+        data = cache.get(cache_key)
+    else:
+        data = None
+        
     if data is not None:
         print >> sys.stderr, 'Cache hit for ' + cache_key
         return data
@@ -29,8 +41,12 @@ def generate_thumbnail(filename, size):
             pass
         s = StringIO()
         i.save(s, 'JPEG')
-        #cache.add(cache_key, s.getvalue(), cache_ttl)
-        print >> sys.stderr, 'Added thumb to cache: ' + cache_key        
+        
+        # Populate cache is available
+        if cache_available:
+            cache.add(cache_key, s.getvalue(), cache_ttl)
+            print >> sys.stderr, 'Added thumb to cache: ' + cache_key        
+        
         return (s.getvalue())
 
 
@@ -60,10 +76,5 @@ def application(environ, start_response):
     start_response(status, response_headers)
     return [output]
 
-
-
-
-#print 'Generating thumbnail...'
-#print generate_thumbnail('DSCN1153.JPG', 100)
     
 

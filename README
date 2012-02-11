@@ -1,5 +1,33 @@
 
-Overview:
----------
+Overview
+--------
 
 This is a simple WSGI Python module to implement and image thumbnailer including a caching layer for serious performance. 
+
+
+Setup
+-----
+
+There are several other web server options available for WSGI application.  A great benchmarking/configuration artical is available here to help you make a decision on which one to go with: http://nichol.as/benchmark-of-python-web-servers
+
+I've gone with Apache2 and mod_wsgi and memcached based on it's simplicity, easy installation on Ubuntu and decent performance results. I've also added Memcached to speed things up a little.  An simple Apache Bench test showed me that with memcached enabled I got 500.45 TPS compared to 11.92 TPS without the cache. 
+
+
+Installation on Ubuntu
+----------------------
+
+On Ubuntu I installed the following packages:
+
+sudo apt-get install libapache2-mod-wsgi
+sudo apt-get install memcached
+sudo apt-get install python-memcache
+
+
+To register your new WSGI application with Apache you need to make the following entry in your httpd.conf
+
+$ sudo vi /etc/apache2/httpd.conf
+
+And add the uri path and location of your script like so:
+
+WSGIScriptAlias /thumbnail /home/kobrien/projects/github/python-thumbnailer/thumbnail.py
+
